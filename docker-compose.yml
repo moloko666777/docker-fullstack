@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: ./app
+    image: ${APP_NAME}/app
+    container_name: ${APP_NAME}_app
+    restart: always
+    command: yarn ${APP_ENV}
+    volumes:
+      - ./app:/usr/app
+      - /usr/app/node_modules
+    env_file:
+      - .env
+    ports:
+      - ${APP_LOCAL_PORT}:${APP_CONTAINER_PORT}
+    networks:
+      backend:
+        ipv4_address: ${APP_HOST}
+
+  postgres:
+    image: postgres:11-alpine
+    container_name: ${APP_NAME}_postgres
+    restart: always
+    ports:
+      - ${DB_LOCAL_PORT}:${DB_PORT}
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./database:/var/lib/postgresql/data:rw
+    networks:
+      backend:
+        ipv4_address: ${DB_HOST}
+
+  redis:
+    image: redis:5-alpine
+    container_name: ${APP_NAME}_redis
+    restart: always
+    ports:
+      - ${REDIS_LOCAL_PORT}:${REDIS_CONTAINER_PORT}
+    networks:
+      backend:
+        ipv4_address: ${REDIS_HOST}
+
+networks:
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${SUBNET}
